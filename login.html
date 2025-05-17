@@ -1,39 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PLUSNET WIFI Login</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
-  <div class="w-full max-w-2xl">
-    <div class="text-center mb-8">
-      <h1 class="text-3xl font-bold mt-4">PLUSNET WIFI</h1>
-      <h3 class="text-3xl font-bold mt-4">Choose Your Access Duration</h3>
-      <p class="text-gray-600 mt-2">Subscribe for a time period and pay via M-PESA</p>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="assets/logo.png" alt="PLUSNET Logo" class="logo">
+      <h1>Choose Your Access Duration</h1>
+      <p>Subscribe for a time period and pay via M-PESA</p>
     </div>
 
-    <form id="login-form" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-      <!-- Plans injected by JS -->
-      <div class="col-span-full grid grid-cols-1 gap-4 mt-4">
-        <input
-          type="text"
-          name="phone"
-          placeholder="Enter M-PESA Phone Number"
-          class="input-field"
-          required
-          pattern="^(07|01)[0-9]{8}$"
-          title="Phone number must be 10 digits and start with 07 or 01"
-        />
-        <button type="submit" class="btn-primary py-3 text-lg font-semibold rounded-lg">
-          Pay & Connect
-        </button>
-      </div>
+    <form id="login-form" class="form">
+      <div id="plans-container"></div>
+      <input
+        type="text"
+        name="phone"
+        placeholder="Enter M-PESA Phone Number"
+        class="input"
+        required
+        pattern="^(07|01)[0-9]{8}$"
+        title="Phone number must be 10 digits and start with 07 or 01"
+      />
+      <button type="submit" class="button">Pay & Connect</button>
     </form>
 
-    <p id="message" class="mt-4 text-center text-red-600"></p>
+    <p id="message" class="message"></p>
   </div>
 
   <script src="jquery.min.js"></script>
@@ -44,22 +39,18 @@
     // Load time-based plans
     async function loadPlans() {
       const plans = await fetch('prices.json').then(res => res.json());
-      const form = document.getElementById('login-form');
-      const phoneSection = form.querySelector('.col-span-full');
-      form.innerHTML = '';
+      const plansContainer = document.getElementById('plans-container');
+      plansContainer.innerHTML = '';
+
       plans.forEach(plan => {
         const label = document.createElement('label');
-        label.className = 'block p-4 bg-white rounded-xl shadow hover:shadow-lg transition cursor-pointer';
+        label.className = 'plan-option';
         label.innerHTML = `
-          <input type="radio" name="plan" value="${plan.duration_limit}|${plan.price}" class="hidden peer" required />
-          <div class="peer-checked:border-2 peer-checked:border-blue-600 peer-checked:bg-blue-50 p-3 rounded-lg">
-            <h2 class="text-xl font-semibold">${plan.duration_limit}</h2>
-            <p class="text-gray-500">KES ${plan.price}</p>
-          </div>
+          <input type="radio" name="plan" value="${plan.duration_limit}|${plan.price}" required>
+          <span class="plan-label">${plan.duration_limit} – KES ${plan.price}</span>
         `;
-        form.appendChild(label);
+        plansContainer.appendChild(label);
       });
-      form.appendChild(phoneSection);
     }
     loadPlans();
   </script>
