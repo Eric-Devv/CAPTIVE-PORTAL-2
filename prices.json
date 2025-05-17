@@ -1,0 +1,8 @@
+[
+  { "duration_limit": "30m", "price": 5 },
+  { "duration_limit": "1h",  "price": 10 },
+  { "duration_limit": "2h",  "price": 20 },
+  { "duration_limit": "4h",  "price": 40 },
+  { "duration_limit": "12h", "price": 80 },
+  { "duration_limit": "24h", "price": 150 }
+]
