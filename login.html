@@ -7,28 +7,40 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <img src="assets/logo.png" alt="PLUSNET Logo" class="logo">
-      <h1>Choose Your Access Duration</h1>
-      <p>Subscribe for a time period and pay via M-PESA</p>
-    </div>
+  <div class="page-wrapper">
+    <header class="header">
+      <div class="header-content">
+        <span class="wifi-icon">📶</span>
+        <span class="site-title">PLUSNET WIFI</span>
+      </div>
+    </header>
 
-    <form id="login-form" class="form">
-      <div id="plans-container"></div>
-      <input
-        type="text"
-        name="phone"
-        placeholder="Enter M-PESA Phone Number"
-        class="input"
-        required
-        pattern="^(07|01)[0-9]{8}$"
-        title="Phone number must be 10 digits and start with 07 or 01"
-      />
-      <button type="submit" class="button">Pay & Connect</button>
-    </form>
+    <main class="main-content">
+      <h2 class="section-title">Choose Your Package</h2>
+      <div id="plans-container" class="plans-grid"></div>
 
-    <p id="message" class="message"></p>
+      <div class="phone-card">
+        <label for="phone" class="phone-label">Enter Your Phone Number</label>
+        <input
+          type="text"
+          id="phone"
+          name="phone"
+          placeholder="e.g., 0712345678"
+          class="phone-input"
+          required
+          pattern="^(07|01)[0-9]{8}$"
+          title="Phone number must be 10 digits and start with 07 or 01"
+        />
+        <p class="phone-note">Enter the phone number registered with M-Pesa</p>
+      </div>
+
+      <button id="pay-btn" class="btn-secondary">Pay with M-Pesa</button>
+      <button id="login-btn" class="btn-primary">Login</button>
+    </main>
+
+    <footer class="footer">
+      <p>© 2025 WIFI Captive Portal. All rights reserved.</p>
+    </footer>
   </div>
 
   <script src="jquery.min.js"></script>
@@ -36,23 +48,33 @@
   <script src="swal.min.js"></script>
   <script src="mpesa.js"></script>
   <script>
-    // Load time-based plans
     async function loadPlans() {
-      const plans = await fetch('prices.json').then(res => res.json());
-      const plansContainer = document.getElementById('plans-container');
-      plansContainer.innerHTML = '';
-
+      const plans = await fetch('prices.json').then(r => r.json());
+      const container = document.getElementById('plans-container');
       plans.forEach(plan => {
         const label = document.createElement('label');
-        label.className = 'plan-option';
+        label.className = 'plan-card';
         label.innerHTML = `
-          <input type="radio" name="plan" value="${plan.duration_limit}|${plan.price}" required>
-          <span class="plan-label">${plan.duration_limit} – KES ${plan.price}</span>
+          <input type="radio" name="plan" value="${plan.duration_limit}|${plan.price}" required />
+          <div class="plan-content">
+            <div class="plan-header">
+              <span class="plan-duration">${plan.duration_limit}</span>
+              <span class="plan-icon"></span>
+            </div>
+            <div class="plan-subtext">${plan.duration_limit.replace(/([0-9]+)([mh])/,'$1 $2')}</div>
+            <div class="plan-price">KSh ${plan.price}</div>
+            <span class="radio-check"></span>
+          </div>
         `;
-        plansContainer.appendChild(label);
+        container.appendChild(label);
       });
     }
     loadPlans();
+
+    document.getElementById('pay-btn').addEventListener('click', () => {
+      // trigger STK Push via mpesa.js logic
+      document.getElementById('login-form')?.dispatchEvent(new Event('submit'));
+    });
   </script>
 </body>
 </html>
