@@ -17,25 +17,33 @@
 
     <main class="main-content">
       <h2 class="section-title">Choose Your Package</h2>
-      <div id="plans-container" class="plans-grid"></div>
+      <div id="message" class="error-message"></div>
 
-      <div class="phone-card">
-        <label for="phone" class="phone-label">Enter Your Phone Number</label>
-        <input
-          type="text"
-          id="phone"
-          name="phone"
-          placeholder="e.g., 0712345678"
-          class="phone-input"
-          required
-          pattern="^(07|01)[0-9]{8}$"
-          title="Phone number must be 10 digits and start with 07 or 01"
-        />
-        <p class="phone-note">Enter the phone number registered with M-Pesa</p>
-      </div>
+      <!-- Unified Form -->
+      <form id="login-form">
+        <div id="plans-container" class="plans-grid"></div>
 
-      <button id="pay-btn" class="btn-secondary">Pay with M-Pesa</button>
-      <button id="login-btn" class="btn-primary">Login</button>
+        <div class="phone-card">
+          <label for="phone" class="phone-label">Enter Your Phone Number</label>
+          <input
+            type="text"
+            id="phone"
+            name="phone"
+            placeholder="e.g., 0712345678"
+            class="phone-input"
+            required
+            pattern="^(07|01)[0-9]{8}$"
+            title="Phone number must be 10 digits and start with 07 or 01"
+          />
+          <p class="phone-note">Enter the phone number registered with M-Pesa</p>
+        </div>
+
+        <button type="submit" id="pay-btn" class="btn-secondary">Pay with M-Pesa</button>
+      </form>
+      <!-- End Form -->
+
+      <a href="https://captive-portal-roan.vercel.app/admin/login"> <button id="login-btn" class="btn-primary">Login</button></a>
+     
     </main>
 
     <footer class="footer">
@@ -59,7 +67,6 @@
           <div class="plan-content">
             <div class="plan-header">
               <span class="plan-duration">${plan.duration_limit}</span>
-              <span class="plan-icon"></span>
             </div>
             <div class="plan-subtext">${plan.duration_limit.replace(/([0-9]+)([mh])/,'$1 $2')}</div>
             <div class="plan-price">KSh ${plan.price}</div>
@@ -71,10 +78,12 @@
     }
     loadPlans();
 
-    document.getElementById('pay-btn').addEventListener('click', () => {
-      // trigger STK Push via mpesa.js logic
-      document.getElementById('login-form')?.dispatchEvent(new Event('submit'));
+    // On form submit, trigger M-PESA STK Push
+    document.getElementById('login-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      // mpesa.js handles the submission via this form's submit event
     });
+
   </script>
 </body>
 </html>

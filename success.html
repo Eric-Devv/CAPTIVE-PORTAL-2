@@ -1,15 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome!</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Access Granted</title>
 </head>
-<body class="bg-gray-100 flex items-center justify-center h-screen">
-  <div class="text-center">
-    <h1 class="text-3xl font-bold text-green-600">Payment Successful!</h1>
-    <p class="mt-2 text-gray-700">You are now connected to PLUSNET WIFI.</p>
+<body>
+  <div style="text-align:center; padding:50px;">
+    <h1>Payment Successful!</h1>
+    <p>You now have internet access for your purchased duration.</p>
+    <script>
+      setTimeout(() => {
+        const expiry = parseInt(localStorage.getItem('expiry'), 10);
+        if (isNaN(expiry) || Date.now() > expiry) {
+          window.location.href = 'login.html';
+        }
+      }, 5000);
+    </script>
   </div>
 </body>
 </html>

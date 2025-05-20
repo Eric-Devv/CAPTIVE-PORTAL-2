@@ -1,37 +1,42 @@
 $('#login-form').on('submit', async function(e) {
   e.preventDefault();
-  const [duration, amount] = this.plan.value.split('|');
-  const phone = this.phone.value.trim();
 
-  if (!/^(07|01)[0-9]{8}$/.test(phone)) {
-    $('#message').text('Please enter a valid phone number starting with 07 or 01');
+  const sel = document.querySelector('input[name="plan"]:checked');
+  if (!sel) {
+    $('#message').text('Select a package');
+    return;
+  }
+
+  const [duration, amount] = sel.value.split('|');
+  const phone = $('#phone').val().trim();
+  if (!/^(07|01)\d{8}$/.test(phone)) {
+    $('#message').text('Invalid phone number');
     return;
   }
 
   try {
-    const stk = await fetch('https://your-proxy.com/mpesa/stkpush', {
+    const response = await fetch('https://your-proxy.com/mpesa/stkpush', {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone, amount })
-    }).then(r => r.json());
+    });
 
-    if (stk.ResponseCode !== '0') throw new Error(stk.errorMessage || 'STK Push failed');
+    const data = await response.json();
+    if (data.ResponseCode !== '0') {
+      throw new Error(data.errorMessage || 'Payment failed');
+    }
 
     const expiryTime = Date.now() + parseDuration(duration);
-    localStorage.setItem('checkoutId', stk.CheckoutRequestID);
     localStorage.setItem('expiry', expiryTime);
-
-    window.location.href = `status.html?mac=${getUrlParam('mac')}&ip=${getUrlParam('ip')}&dst=${getUrlParam('dst')}`;
+    window.location.href = 'status.html';
   } catch (err) {
     $('#message').text(err.message);
   }
 });
 
-function getUrlParam(k) {
-  return new URLSearchParams(location.search).get(k) || '';
-}
-
 function parseDuration(d) {
-  const n = parseInt(d);
-  return d.endsWith('m') ? n*60000 : n*3600000;
+  const num = parseInt(d);
+  if (d.endsWith('m')) return num * 60000;
+  if (d.endsWith('h')) return num * 3600000;
+  return 0;
 }
