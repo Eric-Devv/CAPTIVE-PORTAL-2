@@ -9,14 +9,30 @@
   <div style="text-align:center; padding:50px;">
     <h1>Payment Successful!</h1>
     <p>You now have internet access for your purchased duration.</p>
-    <script>
-      setTimeout(() => {
-        const expiry = parseInt(localStorage.getItem('expiry'), 10);
-        if (isNaN(expiry) || Date.now() > expiry) {
-          window.location.href = 'login.html';
-        }
-      }, 5000);
-    </script>
   </div>
-</body>
-</html>
+  <!-- Auto-login to MikroTik via CHAP -->
+  <script src="md5.js"></script>
+  <script>
+    // Retrieve stored phone and CHAP vars supplied by MikroTik
+    const phone = localStorage.getItem('phone') || '';
+    const password = '';
+    const chapId = "$(chap-id)";
+    const chapChallenge = "$(chap-challenge)";
+    const loginUrl = "$(link-login-only)";
+    const redirectUrl = "$(link-redirect)";
+
+    if (phone) {
+      const response = hexMD5(chapId + password + chapChallenge);
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = loginUrl;
+      form.innerHTML = `
+        <input type="hidden" name="username" value="${phone}">
+        <input type="hidden" name="password" value="${password}">
+        <input type="hidden" name="response" value="${response}">
+        <input type="hidden" name="dst" value="${redirectUrl}">
+      `;
+      document.body.appendChild(form);
+      form.submit();
+    }
+  </script>

@@ -1,32 +1,87 @@
-$('#login-form').on('submit', async function(e) {
+let mpesaConfig = {};
+
+async function loadMpesaConfig() {
+  const res = await fetch('mpesa_config.json');
+  mpesaConfig = await res.json();
+}
+
+$('#login-form').on('submit', async function (e) {
   e.preventDefault();
 
   const sel = document.querySelector('input[name="plan"]:checked');
-  if (!sel) {
-    $('#message').text('Select a package');
+  const phone = $('#phone').val().trim();
+
+  if (!sel || !/^(07|01)\d{8}$/.test(phone)) {
+    $('#message').text('Select a valid package and phone number');
     return;
   }
 
   const [duration, amount] = sel.value.split('|');
-  const phone = $('#phone').val().trim();
-  if (!/^(07|01)\d{8}$/.test(phone)) {
-    $('#message').text('Invalid phone number');
-    return;
-  }
 
   try {
-    const response = await fetch('https://your-proxy.com/mpesa/stkpush', {
+    // Load config if not already loaded
+    if (!mpesaConfig.MPESA_SHORTCODE) await loadMpesaConfig();
+
+    const timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14);
+    const password = btoa(
+      mpesaConfig.MPESA_SHORTCODE +
+      mpesaConfig.MPESA_PASSKEY +
+      timestamp
+    );
+
+    const oauthURL = mpesaConfig.ENV === 'sandbox'
+      ? 'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials'
+      : 'https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials';
+
+    const stkPushURL = mpesaConfig.ENV === 'sandbox'
+      ? 'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest'
+      : 'https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest';
+
+    // Get access token
+    const tokenRes = await fetch(oauthURL, {
+      headers: {
+        Authorization: 'Basic ' + btoa(
+          `${mpesaConfig.MPESA_CONSUMER_KEY}:${mpesaConfig.MPESA_CONSUMER_SECRET}`
+        )
+      }
+    });
+    const tokenData = await tokenRes.json();
+    const accessToken = tokenData.access_token;
+
+    // Make STK Push request
+    const pushRes = await fetch(stkPushURL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone, amount })
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        BusinessShortCode: mpesaConfig.MPESA_SHORTCODE,
+        Password: password,
+        Timestamp: timestamp,
+        TransactionType: mpesaConfig.PAYMENT_TYPE === 'Paybill'
+          ? 'CustomerPayBillOnline'
+          : 'CustomerBuyGoodsOnline',
+        Amount: amount,
+        PartyA: phone,
+        PartyB: mpesaConfig.MPESA_SHORTCODE,
+        PhoneNumber: phone,
+        CallBackURL: mpesaConfig.MPESA_CALLBACK_URL,
+        AccountReference: 'WIFI',
+        TransactionDesc: 'WiFi Access Payment'
+      })
     });
 
-    const data = await response.json();
-    if (data.ResponseCode !== '0') {
-      throw new Error(data.errorMessage || 'Payment failed');
+    const result = await pushRes.json();
+
+    if (result.ResponseCode !== '0') {
+      throw new Error(result.errorMessage || 'Payment failed.');
     }
 
-    const expiryTime = Date.now() + parseDuration(duration);
+    // Store session expiration time
+     const expiryTime = Date.now() + parseDuration(duration);
+    // Store phone for auto-login
+    localStorage.setItem('phone', phone);
     localStorage.setItem('expiry', expiryTime);
     window.location.href = 'status.html';
   } catch (err) {
@@ -35,8 +90,6 @@ $('#login-form').on('submit', async function(e) {
 });
 
 function parseDuration(d) {
-  const num = parseInt(d);
-  if (d.endsWith('m')) return num * 60000;
-  if (d.endsWith('h')) return num * 3600000;
-  return 0;
+  const n = parseInt(d, 10);
+  return d.endsWith('m') ? n * 60000 : n * 3600000;
 }
